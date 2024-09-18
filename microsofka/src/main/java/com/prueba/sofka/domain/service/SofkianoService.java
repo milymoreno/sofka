@@ -1,6 +1,5 @@
 package com.prueba.sofka.domain.service;
 
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.prueba.sofka.application.components.SofkianoEventProducer;
@@ -75,7 +74,15 @@ public class SofkianoService implements ISofkianoService {
         ExperienciaCliente savedExperiencia = experienciaClienteRepository.save(experienciaCliente);
 
         // Publicar evento de ingreso en RabbitMQ
-        sofkianoEventProducer.sendSofkianoChangeEvent(sofkianoId.toString(), clienteId.toString(), LocalDateTime.now().toString(), "INGRESO");
+        sofkianoEventProducer.sendSofkianoChangeEvent(
+            sofkianoId.toString(),
+            sofkiano.getNombres(),
+            clienteId.toString(),
+            cliente.getNombre(),
+            LocalDateTime.now().toString(),
+            "INGRESO"
+        );
+
 
         return savedExperiencia;
     }
@@ -83,6 +90,13 @@ public class SofkianoService implements ISofkianoService {
     @Override
     @Transactional
     public void desasociarCliente(Long sofkianoId, Long clienteId, String descripcion) {
+       
+        Sofkiano sofkiano = sofkianoRepository.findById(sofkianoId)
+            .orElseThrow(() -> new IllegalArgumentException("Sofkiano no encontrado"));
+        
+        Cliente cliente = clienteRepository.findById(clienteId)
+            .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
+
         ExperienciaCliente experienciaCliente = experienciaClienteRepository
             .findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId)
             .orElseThrow(() -> new IllegalArgumentException("No existe asociación activa entre el Sofkiano y el Cliente"));
@@ -93,6 +107,13 @@ public class SofkianoService implements ISofkianoService {
         experienciaClienteRepository.save(experienciaCliente);
 
         // Publicar evento de egreso en RabbitMQ
-        sofkianoEventProducer.sendSofkianoChangeEvent(sofkianoId.toString(), clienteId.toString(), LocalDateTime.now().toString(), "EGRESO");
+        sofkianoEventProducer.sendSofkianoChangeEvent(
+            sofkianoId.toString(),
+            sofkiano.getNombres(),
+            clienteId.toString(),
+            cliente.getNombre(),
+            LocalDateTime.now().toString(),
+            "EGRESO"
+        );
     }
 }
