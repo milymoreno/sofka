@@ -20,11 +20,11 @@ public class ExperienciaClienteController {
         return experienciaClienteService.findAll();
     }
 
-    @PostMapping
+    /*@PostMapping
     public ResponseEntity<ExperienciaCliente> createExperiencia(@RequestBody ExperienciaCliente experienciaCliente) {
         ExperienciaCliente savedExperiencia = experienciaClienteService.save(experienciaCliente);
         return ResponseEntity.ok(savedExperiencia);
-    }
+    }*/
 
     @GetMapping("/{id}")
     public ResponseEntity<ExperienciaCliente> getExperienciaById(@PathVariable Long id) {

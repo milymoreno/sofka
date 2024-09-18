@@ -1,7 +1,6 @@
 package com.prueba.sofka.domain.model.entity;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 import com.prueba.sofka.domain.model.enums.TipoIdentificacion;
 import jakarta.validation.constraints.Email;
@@ -25,7 +24,7 @@ public class Sofkiano {
     private TipoIdentificacion tipoIdentificacion;
 
     @NotBlank(message = "El número de identificación es obligatorio")
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String numeroIdentificacion;
 
     @NotBlank(message = "Los nombres son obligatorios")
@@ -49,6 +48,15 @@ public class Sofkiano {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @NotBlank(message = "La descripciòn del perfil es obligatrorio")
+    @Column(nullable = false)
+    private String perfil;
+
+    @NotBlank(message = "la cantidad de años de expericia es obligatoria")
+    @Column(nullable = false)
+    private Integer cantidadAniosExperiencia;
+
+    @NotBlank(message = "La fecha de nacimiento el obligatoria")
     @Column(nullable = false)
     private LocalDateTime fechaNacimiento;
 
@@ -56,16 +64,6 @@ public class Sofkiano {
     private LocalDateTime fechaCreacion;
 
     private LocalDateTime fechaModificacion;
-
-    
-
-    @ManyToMany
-    @JoinTable(
-        name = "cliente_sofkiano", 
-        joinColumns = @JoinColumn(name = "sofkiano_id"),
-        inverseJoinColumns = @JoinColumn(name = "cliente_id")
-    )
-    private Set<Cliente> clientes; // Relación muchos a muchos con Cliente
 
     @PrePersist
     protected void onCreate() {

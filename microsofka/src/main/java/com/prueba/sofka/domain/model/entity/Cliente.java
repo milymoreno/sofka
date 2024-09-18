@@ -1,9 +1,8 @@
 package com.prueba.sofka.domain.model.entity;
 
-import lombok.Data;
-
+import jakarta.validation.constraints.NotBlank;
 import jakarta.persistence.*;
-import java.util.Set;
+import lombok.Data;
 
 @Data
 @Entity
@@ -14,15 +13,17 @@ public class Cliente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "El nombre del cliente es obligatorio")
+    @Column(nullable = false)
     private String nombre;
 
-    @ManyToMany
-    @JoinTable(
-        name = "cliente_sofkiano", // Nombre de la tabla intermedia
-        joinColumns = @JoinColumn(name = "cliente_id"),
-        inverseJoinColumns = @JoinColumn(name = "sofkiano_id")
-    )
-    private Set<Sofkiano> sofkianos; // Relación muchos a muchos con Sofkiano
+    @NotBlank(message = "La direccion es obligatoria")
+    @Column(nullable = false)
+    private String direccion;
+
+    @NotBlank(message = "El telèfono es obligatorio")
+    @Column(nullable = false)
+    private String telefono;
 }
 
 

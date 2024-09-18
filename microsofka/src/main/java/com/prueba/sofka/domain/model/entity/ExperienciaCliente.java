@@ -19,7 +19,6 @@ public class ExperienciaCliente {
     @JoinColumn(name = "sofkiano_id", nullable = false)
     private Sofkiano sofkiano;
 
-    
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
@@ -34,5 +33,9 @@ public class ExperienciaCliente {
 
     private String descripcion;
 
+    @PrePersist
+    protected void onCreate() {
+        this.fechaInicio = LocalDateTime.now(); 
+    }  
    
 }

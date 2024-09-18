@@ -1,12 +1,12 @@
 package com.prueba.sofka.infrastructure.web.controller;
 
-//import com.prueba.sofka.application.service.IExcelService;
 import com.prueba.sofka.application.service.ISofkianoService;
+import com.prueba.sofka.domain.model.entity.ExperienciaCliente;
 import com.prueba.sofka.domain.model.entity.Sofkiano;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+
 
 import java.util.List;
 
@@ -17,9 +17,6 @@ public class SofkianoController {
     @Autowired
     private ISofkianoService sofkianoService;
 
-    /*@Autowired
-    private IExcelService excelService;
-    */
     @GetMapping
     public List<Sofkiano> getAllSofkianos() {
         return sofkianoService.findAll();
@@ -54,13 +51,22 @@ public class SofkianoController {
         return ResponseEntity.noContent().build();
     }
 
-    /*@PostMapping("/upload")
-    public ResponseEntity<String> uploadSofkianos(@RequestParam("file") MultipartFile file) {
-        try {
-            excelService.uploadSofkianos(file);
-            return ResponseEntity.ok("Carga exitosa!");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error al cargar el archivo: " + e.getMessage());
-        }
-    }*/
+    @PostMapping("/{sofkianoId}/clientes/{clienteId}/asociar")
+    public ResponseEntity<ExperienciaCliente> asociarCliente(
+            @PathVariable Long sofkianoId, 
+            @PathVariable Long clienteId,
+            @RequestParam String rol) {
+        ExperienciaCliente experienciaCliente = sofkianoService.asociarCliente(sofkianoId, clienteId, rol);
+        return ResponseEntity.ok(experienciaCliente);
+    }
+
+    @PostMapping("/{sofkianoId}/clientes/{clienteId}/desasociar")
+    public ResponseEntity<Void> desasociarCliente(
+            @PathVariable Long sofkianoId, 
+            @PathVariable Long clienteId, 
+            @RequestParam String descripcion) {
+        sofkianoService.desasociarCliente(sofkianoId, clienteId, descripcion);
+        return ResponseEntity.ok().build();
+    }
+    
 }
