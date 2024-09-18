@@ -44,8 +44,8 @@ class SofkianoControllerTest {
 
         mockMvc.perform(post("/api/sofkianos")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"Test Name\"}"))
+                .content("{\"nombres\": \"Mildred Maria\"}"))
                 .andExpect(status().isOk())
-                .andExpect(content().json("{\"id\":1,\"name\":\"Test Name\"}"));
+                .andExpect(content().json("{\"id\":1,\"nombres\":\"Mildred Maria\"}"));
     }
 }

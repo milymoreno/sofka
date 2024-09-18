@@ -1,5 +1,9 @@
 package com.prueba.sofka.domain.service;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.prueba.sofka.application.components.SofkianoEventProducer;
 
 import com.prueba.sofka.application.service.ISofkianoService;
 import com.prueba.sofka.domain.model.entity.Cliente;
@@ -8,8 +12,6 @@ import com.prueba.sofka.domain.model.entity.Sofkiano;
 import com.prueba.sofka.infrastructure.persistence.repository.ClienteRepository;
 import com.prueba.sofka.infrastructure.persistence.repository.ExperienciaClienteRepository;
 import com.prueba.sofka.infrastructure.persistence.repository.SofkianoRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,11 +22,15 @@ public class SofkianoService implements ISofkianoService {
     private final SofkianoRepository sofkianoRepository;
     private final ClienteRepository clienteRepository;
     private final ExperienciaClienteRepository experienciaClienteRepository;
+    private final SofkianoEventProducer sofkianoEventProducer;
 
-    public SofkianoService(SofkianoRepository sofkianoRepository, ClienteRepository clienteRepository, ExperienciaClienteRepository experienciaClienteRepository) {
+    public SofkianoService(SofkianoRepository sofkianoRepository, ClienteRepository clienteRepository, 
+                           ExperienciaClienteRepository experienciaClienteRepository, 
+                           SofkianoEventProducer sofkianoEventProducer) {
         this.sofkianoRepository = sofkianoRepository;
         this.clienteRepository = clienteRepository;
         this.experienciaClienteRepository = experienciaClienteRepository;
+        this.sofkianoEventProducer = sofkianoEventProducer;
     }
 
     @Override
@@ -66,7 +72,12 @@ public class SofkianoService implements ISofkianoService {
         experienciaCliente.setCliente(cliente);
         experienciaCliente.setRol(rol);
 
-        return experienciaClienteRepository.save(experienciaCliente); // Guarda la experiencia
+        ExperienciaCliente savedExperiencia = experienciaClienteRepository.save(experienciaCliente);
+
+        // Publicar evento de ingreso en RabbitMQ
+        sofkianoEventProducer.sendSofkianoChangeEvent(sofkianoId.toString(), clienteId.toString(), LocalDateTime.now().toString(), "INGRESO");
+
+        return savedExperiencia;
     }
 
     @Override
@@ -79,6 +90,9 @@ public class SofkianoService implements ISofkianoService {
         experienciaCliente.setFechaFin(LocalDateTime.now());
         experienciaCliente.setDescripcion(descripcion);
 
-        experienciaClienteRepository.save(experienciaCliente); // Actualiza la experiencia con fecha de fin
+        experienciaClienteRepository.save(experienciaCliente);
+
+        // Publicar evento de egreso en RabbitMQ
+        sofkianoEventProducer.sendSofkianoChangeEvent(sofkianoId.toString(), clienteId.toString(), LocalDateTime.now().toString(), "EGRESO");
     }
 }
