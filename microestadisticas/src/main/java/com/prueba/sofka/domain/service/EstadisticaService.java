@@ -49,6 +49,35 @@ public class EstadisticaService implements IEstadisticaService {
         repository.save(estadistica);
     }
 
+    // public void procesarEvento(Map<String, Object> evento) {
+    //     String tipoEvento = (String) evento.get("tipoEvento");
+    //     String sofkianoId = (String) evento.get("sofkianoId");
+    //     String nombreSofkiano = (String) evento.get("nombre");
+
+    //     // Extraer la información del cliente asociado al evento
+    //     Map<String, Object> clienteInfo = (Map<String, Object>) evento.get("cliente");
+    //     String clienteId = (String) clienteInfo.get("clienteId");
+    //     String nombreCliente = (String) clienteInfo.get("nombreCliente");
+    //     String fecha = (String) clienteInfo.get("fecha");
+
+    //     // Crear el objeto Cliente
+    //     Cliente cliente = new Cliente(clienteId, nombreCliente, fecha);
+
+    //     // Obtener o crear la estadística del sofkiano
+    //     EstadisticaCambioCliente estadistica = repository.findBySofkianoId(sofkianoId)
+    //         .orElse(new EstadisticaCambioCliente(sofkianoId, nombreSofkiano));
+
+    //     // Dependiendo del tipo de evento, lo guardamos en ingreso o egreso
+    //     if (tipoEvento.equalsIgnoreCase("INGRESO")) {
+    //         estadistica.getClientesIngreso().add(cliente);
+    //     } else if (tipoEvento.equalsIgnoreCase("EGRESO")) {
+    //         estadistica.getClientesEgreso().add(cliente);
+    //     }
+
+    //     // Guardar la estadística actualizada en DynamoDB
+    //     repository.save(estadistica);
+    // }
+
     @Override
     public List<EstadisticaCambioCliente> obtenerEstadisticasPorRangoFechas(String fechaInicio, String fechaFin) {
         // Lógica para obtener las estadísticas de DynamoDB según el rango de fechas

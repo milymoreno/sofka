@@ -20,7 +20,7 @@ public class Sofkiano {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @NotBlank(message = "El tipo de identificación es obligatorio")
+    //@NotBlank(message = "El tipo de identificación es obligatorio")
     private TipoIdentificacion tipoIdentificacion;
 
     @NotBlank(message = "El número de identificación es obligatorio")
@@ -52,11 +52,11 @@ public class Sofkiano {
     @Column(nullable = false)
     private String perfil;
 
-    @NotBlank(message = "la cantidad de años de expericia es obligatoria")
+    //@NotBlank(message = "la cantidad de años de expericia es obligatoria")
     @Column(nullable = false)
     private Integer cantidadAniosExperiencia;
 
-    @NotBlank(message = "La fecha de nacimiento el obligatoria")
+    //@NotBlank(message = "La fecha de nacimiento el obligatoria")
     @Column(nullable = false)
     private LocalDateTime fechaNacimiento;
 

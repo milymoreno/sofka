@@ -39,11 +39,8 @@ public class SofkianoEventListener {
     }
 
     private void handleMessage(String consumerTag, Delivery message) {
-    try {
-        // Convertimos el mensaje a un Map
-        Map<String, Object> eventData = objectMapper.readValue(message.getBody(), Map.class);
-        
-        // Llamamos al servicio para procesar el evento y guardar la estadística
+    try {        
+        Map<String, Object> eventData = objectMapper.readValue(message.getBody(), Map.class);      
         estadisticaService.procesarEvento(eventData);
     } catch (IOException e) {
         e.printStackTrace();

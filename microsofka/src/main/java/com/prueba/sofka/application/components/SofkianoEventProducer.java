@@ -33,44 +33,63 @@ public class SofkianoEventProducer {
         try (Connection connection = connectionFactory.newConnection();
              Channel channel = connection.createChannel()) {
             
-            // Publica el evento correctamente serializado
-            channel.basicPublish(EXCHANGE_NAME, "", MessageProperties.PERSISTENT_TEXT_PLAIN, serializeMessage(sofkianoId, nombreSofkiano, clienteId, nombreCliente, fecha, tipoEvento));
+            // Serializar el mensaje
+            byte[] message = serializeMessage(sofkianoId, nombreSofkiano, clienteId, nombreCliente, fecha, tipoEvento);
+    
+            // Imprimir todos los detalles del evento
+            System.out.println("Enviando evento de cambio de Sofkiano:");
+            System.out.println("Sofkiano ID: " + sofkianoId);
+            System.out.println("Nombre del Sofkiano: " + nombreSofkiano);
+            System.out.println("Cliente ID: " + clienteId);
+            System.out.println("Nombre del Cliente: " + nombreCliente);
+            System.out.println("Fecha del Evento: " + fecha);
+            System.out.println("Tipo de Evento: " + tipoEvento);
+            System.out.println("Mensaje serializado: " + new String(message)); // Si deseas imprimir el mensaje serializado
+    
+            // Publica el evento en RabbitMQ
+            channel.basicPublish(EXCHANGE_NAME, "", MessageProperties.PERSISTENT_TEXT_PLAIN, message);
             System.out.println(" [x] Sent sofkiano change event for sofkianoId: " + sofkianoId);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+    
+
+    // private byte[] serializeMessage(String sofkianoId, String nombreSofkiano, String clienteId, 
+    //                             String nombreCliente, String fecha, String tipoEvento) throws IOException {
+    //     Map<String, Object> sofkianoEventData = new HashMap<>();
+    //     sofkianoEventData.put("sofkianoId", sofkianoId);
+    //     sofkianoEventData.put("nombre", nombreSofkiano);
+    //     sofkianoEventData.put("clienteId", clienteId);
+    //     sofkianoEventData.put("nombreCliente", nombreCliente);
+    //     sofkianoEventData.put("fecha",fecha);
+    //     sofkianoEventData.put("tipoEvento",tipoEvento);        
+
+    //     // Convertimos el mapa a JSON
+    //     String jsonMessage = objectMapper.writeValueAsString(sofkianoEventData);
+    //     return jsonMessage.getBytes();
+    // }
 
     private byte[] serializeMessage(String sofkianoId, String nombreSofkiano, String clienteId, 
                                 String nombreCliente, String fecha, String tipoEvento) throws IOException {
-        Map<String, Object> sofkianoEventData = new HashMap<>();
-        sofkianoEventData.put("sofkianoId", sofkianoId);
-        sofkianoEventData.put("nombre", nombreSofkiano);
+    Map<String, Object> sofkianoEventData = new HashMap<>();
+    sofkianoEventData.put("sofkianoId", sofkianoId);
+    sofkianoEventData.put("nombre", nombreSofkiano);
+    
+    // Información del cliente y del evento
+    Map<String, Object> clienteData = new HashMap<>();
+    clienteData.put("clienteId", clienteId);
+    clienteData.put("nombreCliente", nombreCliente);
+    clienteData.put("fecha", fecha);  // puedes usar un formato de fecha estándar
+    
+    sofkianoEventData.put("cliente", clienteData);
+    sofkianoEventData.put("tipoEvento", tipoEvento);
 
-        // Creando listas vacías para los clientes de ingreso y egreso
-        List<Map<String, Object>> clientesIngreso = new ArrayList<>();
-        List<Map<String, Object>> clientesEgreso = new ArrayList<>();
+    // Convertimos el mapa a JSON
+    String jsonMessage = objectMapper.writeValueAsString(sofkianoEventData);
+    return jsonMessage.getBytes();
+}
 
-        // Dependiendo del tipo de evento, agregamos el cliente en la lista correspondiente
-        Map<String, Object> clienteData = new HashMap<>();
-        clienteData.put("clienteId", clienteId);
-        clienteData.put("nombreCliente", nombreCliente);
-        
-        if ("ingreso".equalsIgnoreCase(tipoEvento)) {
-            clienteData.put("fechaIngreso", fecha);
-            clientesIngreso.add(clienteData);
-        } else if ("egreso".equalsIgnoreCase(tipoEvento)) {
-            clienteData.put("fechaEgreso", fecha);
-            clientesEgreso.add(clienteData);
-        }
-
-        sofkianoEventData.put("clientesIngreso", clientesIngreso);
-        sofkianoEventData.put("clientesEgreso", clientesEgreso);
-
-        // Convertimos el mapa a JSON
-        String jsonMessage = objectMapper.writeValueAsString(sofkianoEventData);
-        return jsonMessage.getBytes();
-    }
 
     private void createQueue() {
         try (Connection connection = connectionFactory.newConnection();
