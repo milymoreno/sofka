@@ -34,6 +34,16 @@ public class EstadisticaController {
         Map<String, Integer> resultado = estadisticaService.obtenerIngresosYSalidas(fechaInicio, fechaFin);
         return ResponseEntity.ok(resultado);
     }
+	
+	@GetMapping("/ingresosVsSalidasPorCliente")
+    public ResponseEntity<Map<String, Map<String, Integer>>> obtenerIngresosYSalidasPorClente(
+            @RequestParam String fechaInicio,
+            @RequestParam String fechaFin) {
+        
+        Map<String, Map<String, Integer>> resultado = estadisticaService.obtenerIngresosYSalidasPorCliente(fechaInicio, fechaFin);
+        
+        return ResponseEntity.ok(resultado);
+    }
 
     @GetMapping
     public List<EstadisticaCambioCliente> getAllEstadisticas() {

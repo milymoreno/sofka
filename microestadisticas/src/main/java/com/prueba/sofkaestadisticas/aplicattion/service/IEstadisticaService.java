@@ -12,6 +12,8 @@ public interface IEstadisticaService {
     List<EstadisticaCambioClienteResponse> obtenerEstadisticasPorRangoFechas(String fechaInicio, String fechaFin);
 
     Map<String, Integer> obtenerIngresosYSalidas(String fechaInicio, String fechaFin);
+	Map<String, Map<String, Integer>> obtenerIngresosYSalidasPorCliente(String fechaInicio, String fechaFin);
+	
     List<EstadisticaCambioCliente> getAllEstadisticas();
 }
 

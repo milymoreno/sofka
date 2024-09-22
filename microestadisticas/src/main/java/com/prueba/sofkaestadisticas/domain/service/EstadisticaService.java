@@ -16,6 +16,7 @@ import java.time.format.DateTimeParseException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -111,8 +112,62 @@ public class EstadisticaService implements IEstadisticaService {
     //     }
     //     repository.save(estadistica);
     // }
+	
+	@Override
+	public List<EstadisticaCambioClienteResponse> obtenerEstadisticasPorRangoFechas(String fechaInicio, String fechaFin) {
+		try {
+			LocalDateTime inicio = LocalDateTime.parse(fechaInicio, formatter);
+			LocalDateTime fin = LocalDateTime.parse(fechaFin, formatter);
 
-    @Override
+			if (inicio.isAfter(fin)) {
+				throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha de fin.");
+			}
+			
+			List<EstadisticaCambioCliente> estadisticas = (List<EstadisticaCambioCliente>) repository.findAll();
+
+			return estadisticas.stream()
+				.filter(estadistica -> 
+					hayClientesEnRango(estadistica.getClientesIngreso(), inicio, fin) && 
+					hayClientesEnRango(estadistica.getClientesEgreso(), inicio, fin) &&
+					tieneCambioValido(estadistica))
+				.map(estadistica -> {
+					String sofkianoId = estadistica.getSofkianoId();
+					String nombreSofkiano = estadistica.getNombre();
+
+					List<ClienteInfo> clientesEgreso = estadistica.getClientesEgreso().stream()
+						.filter(cliente -> estaEnRango(cliente.getFecha(), inicio, fin)) // Filtrar egresos en rango
+						.map(cliente -> new ClienteInfo(cliente.getClienteId(), cliente.getNombreCliente(), 
+														  LocalDateTime.parse(cliente.getFecha(), formatter)))
+						.collect(Collectors.toList());
+
+					// Obtener solo los ingresos que no tengan un egreso correspondiente
+					List<ClienteInfo> clientesIngreso = estadistica.getClientesIngreso().stream()
+						.filter(clienteIngreso -> {
+							boolean tieneEgresoCorrespondiente = clientesEgreso.stream()
+								.anyMatch(clienteEgreso -> clienteEgreso.getClienteId().equals(clienteIngreso.getClienteId()));
+							return estaEnRango(clienteIngreso.getFecha(), inicio, fin) && !tieneEgresoCorrespondiente;
+						})
+						.map(cliente -> new ClienteInfo(cliente.getClienteId(), cliente.getNombreCliente(), 
+														  LocalDateTime.parse(cliente.getFecha(), formatter)))
+						.collect(Collectors.toList());
+
+					// Retornar solo si hay al menos un cliente de egreso y ingreso en el rango
+					if (!clientesIngreso.isEmpty() && !clientesEgreso.isEmpty()) {
+						return new EstadisticaCambioClienteResponse(sofkianoId, nombreSofkiano, 
+																	clientesEgreso, clientesIngreso);
+					}
+
+					return null; // Ignorar si no hay cambio válido
+				})
+				.filter(response -> response != null) // Filtrar nulos
+				.collect(Collectors.toList());
+
+		} catch (DateTimeParseException e) {
+			throw new IllegalArgumentException("Formato de fecha inválido: " + e.getMessage());
+		}
+	}
+
+    /* @Override
     public List<EstadisticaCambioClienteResponse> obtenerEstadisticasPorRangoFechas(String fechaInicio, String fechaFin) {
         try {
             LocalDateTime inicio = LocalDateTime.parse(fechaInicio, formatter);
@@ -177,66 +232,111 @@ public class EstadisticaService implements IEstadisticaService {
             throw new IllegalArgumentException("Formato de fecha inválido: " + e.getMessage());
         }
     }
-
+ */
 
 
     private boolean tieneCambioValido(EstadisticaCambioCliente estadistica) {
         return !estadistica.getClientesIngreso().isEmpty() && !estadistica.getClientesEgreso().isEmpty();
     }
 
-    
-    // @Override
-    // public Map<String, Integer> obtenerIngresosYSalidas(String fechaInicio, String fechaFin) {
-    //     LocalDateTime inicio = LocalDateTime.parse(fechaInicio, formatter);
-    //     LocalDateTime fin = LocalDateTime.parse(fechaFin, formatter);
-
-    //     List<EstadisticaCambioCliente> estadisticas = (List<EstadisticaCambioCliente>) repository.findAll();
-
-    //     int ingresos = estadisticas.stream()
-    //         .mapToInt(e -> (int) e.getClientesIngreso().stream()
-    //             .filter(cliente -> estaEnRango(cliente.getFecha(), inicio, fin))
-    //             .count())
-    //         .sum();
-
-    //     int egresos = estadisticas.stream()
-    //         .mapToInt(e -> (int) e.getClientesEgreso().stream()
-    //             .filter(cliente -> estaEnRango(cliente.getFecha(), inicio, fin))
-    //             .count())
-    //         .sum();
-
-    //     return Map.of("ingresos", ingresos, "egresos", egresos);
-    // }
-
     @Override
-    public Map<String, Integer> obtenerIngresosYSalidas(String fechaInicio, String fechaFin) {
+    public Map<String, Integer> obtenerIngresosYSalidas(String fechaInicio, String fechaFin) {        
         LocalDateTime inicio = LocalDateTime.parse(fechaInicio, formatter);
-        LocalDateTime fin = LocalDateTime.parse(fechaFin, formatter);
+        LocalDateTime fin = LocalDateTime.parse(fechaFin, formatter);       
+        System.out.println("Fecha de inicio: " + inicio);
+        System.out.println("Fecha de fin: " + fin);
+       
+        List<EstadisticaCambioCliente> estadisticas = (List<EstadisticaCambioCliente>) repository.findAll();        
+        
+        System.out.println("Cantidad de estadísticas: " + estadisticas.size());
+        
+        estadisticas.forEach(e -> {
+            System.out.println("Clientes de Ingreso:");
+            e.getClientesIngreso().forEach(cliente -> System.out.println("Fecha de Ingreso: " + cliente.getFecha()));
 
-        List<EstadisticaCambioCliente> estadisticas = (List<EstadisticaCambioCliente>) repository.findAll();
-
-        // Contar ingresos únicos
-        Set<String> ingresosUnicos = new HashSet<>();
-        estadisticas.forEach(e -> 
-            e.getClientesIngreso().stream()
-                .filter(cliente -> estaEnRango(cliente.getFecha(), inicio, fin))
-                .forEach(cliente -> ingresosUnicos.add(cliente.getClienteId()))
-        );
-
-        // Contar egresos únicos
-        Set<String> egresosUnicos = new HashSet<>();
-        estadisticas.forEach(e -> 
-            e.getClientesEgreso().stream()
-                .filter(cliente -> estaEnRango(cliente.getFecha(), inicio, fin))
-                .forEach(cliente -> egresosUnicos.add(cliente.getClienteId()))
-        );
-
-        int ingresos = ingresosUnicos.size();
-        int egresos = egresosUnicos.size();
+            System.out.println("Clientes de Egreso:");
+            e.getClientesEgreso().forEach(cliente -> System.out.println("Fecha de Egreso: " + cliente.getFecha()));
+        });        
+        int ingresos = estadisticas.stream()
+            .mapToInt(e -> (int) e.getClientesIngreso().stream()
+                .filter(cliente -> {
+                    boolean enRango = estaEnRango(cliente.getFecha(), inicio, fin);
+                    // Depuración: Imprimir si la fecha está en el rango
+                    System.out.println("Fecha Ingreso Cliente: " + cliente.getFecha() + " en rango: " + enRango);
+                    return enRango;
+                })
+                .count())
+            .sum();
+        
+        int egresos = estadisticas.stream()
+            .mapToInt(e -> (int) e.getClientesEgreso().stream()
+                .filter(cliente -> {
+                    boolean enRango = estaEnRango(cliente.getFecha(), inicio, fin);
+                    // Depuración: Imprimir si la fecha está en el rango
+                    System.out.println("Fecha Egreso Cliente: " + cliente.getFecha() + " en rango: " + enRango);
+                    return enRango;
+                })
+                .count())
+            .sum();
+        
+        System.out.println("Ingresos totales: " + ingresos);
+        System.out.println("Egresos totales: " + egresos);
 
         return Map.of("Ingresos", ingresos, "Egresos", egresos);
     }
+	
+	@Override
+    public Map<String, Map<String, Integer>> obtenerIngresosYSalidasPorCliente(String fechaInicio, String fechaFin) {        
+		LocalDateTime inicio = LocalDateTime.parse(fechaInicio, formatter);
+		LocalDateTime fin = LocalDateTime.parse(fechaFin, formatter);       
+		System.out.println("Fecha de inicio: " + inicio);
+		System.out.println("Fecha de fin: " + fin);
+	   
+		List<EstadisticaCambioCliente> estadisticas = (List<EstadisticaCambioCliente>) repository.findAll();        
+		System.out.println("Cantidad de estadísticas: " + estadisticas.size());
+		
+		Map<String, Integer> ingresosPorCliente = new HashMap<>();
+		Map<String, Integer> egresosPorCliente = new HashMap<>();
+		
+		estadisticas.forEach(e -> {
+			e.getClientesIngreso().forEach(cliente -> {
+				if (estaEnRango(cliente.getFecha(), inicio, fin)) {
+					// Sumar ingresos por cliente
+					ingresosPorCliente.merge(cliente.getNombreCliente(), 1, Integer::sum);
+					System.out.println("Ingreso de cliente: " + cliente.getNombreCliente() + " en fecha: " + cliente.getFecha());
+				}
+			});
+
+			e.getClientesEgreso().forEach(cliente -> {
+				if (estaEnRango(cliente.getFecha(), inicio, fin)) {
+					// Sumar egresos por cliente
+					egresosPorCliente.merge(cliente.getNombreCliente(), 1, Integer::sum);
+					System.out.println("Egreso de cliente: " + cliente.getNombreCliente() + " en fecha: " + cliente.getFecha());
+				}
+			});
+		});
+
+		System.out.println("Ingresos por cliente: " + ingresosPorCliente);
+		System.out.println("Egresos por cliente: " + egresosPorCliente);
+
+		// Crear un mapa para el resultado
+		Map<String, Map<String, Integer>> resultado = new HashMap<>();
+		resultado.put("Ingresos", ingresosPorCliente);
+		resultado.put("Egresos", egresosPorCliente);
+
+		// Imprimir totales
+		System.out.println("Totales por cliente:");
+		for (String cliente : ingresosPorCliente.keySet()) {
+			int totalIngresos = ingresosPorCliente.get(cliente);
+			int totalEgresos = egresosPorCliente.getOrDefault(cliente, 0); // 0 si no hay egresos
+			System.out.println("Cliente: " + cliente + ", Ingresos: " + totalIngresos + ", Egresos: " + totalEgresos);
+		}
+
+		return resultado;
+	}
 
 
+   
     @Override
     public List<EstadisticaCambioCliente> getAllEstadisticas() {
         return (List<EstadisticaCambioCliente>) repository.findAll(); 

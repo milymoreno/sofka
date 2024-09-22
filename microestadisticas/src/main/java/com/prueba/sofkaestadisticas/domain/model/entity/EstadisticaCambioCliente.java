@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -22,10 +23,10 @@ public class EstadisticaCambioCliente {
     private String nombre;
 
     @DynamoDBAttribute(attributeName = "clientesIngreso")
-    private List<Cliente> clientesIngreso;
+    private List<Cliente> clientesIngreso = new ArrayList<>();
 
     @DynamoDBAttribute(attributeName = "clientesEgreso")
-    private List<Cliente> clientesEgreso;
+    private List<Cliente> clientesEgreso = new ArrayList<>();
 
     public EstadisticaCambioCliente(String sofkianoId, String nombre) {
         this.sofkianoId = sofkianoId;
@@ -35,8 +36,8 @@ public class EstadisticaCambioCliente {
     public EstadisticaCambioCliente(String sofkianoId, String nombre, List<Cliente> clientesIngreso, List<Cliente> clientesEgreso) {
         this.sofkianoId = sofkianoId;
         this.nombre = nombre;
-        this.clientesIngreso = clientesIngreso;
-        this.clientesEgreso = clientesEgreso;
+        this.clientesIngreso = clientesIngreso != null ? clientesIngreso : new ArrayList<>();
+        this.clientesEgreso = clientesEgreso != null ? clientesEgreso : new ArrayList<>();
     }
 
     public String toJSON() {
