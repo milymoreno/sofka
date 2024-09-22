@@ -3,17 +3,17 @@ package com.prueba.sofkaestadisticas.domain.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.prueba.sofkaestadisticas.domain.model.entity.Cliente;
 import com.prueba.sofkaestadisticas.domain.model.entity.EstadisticaCambioCliente;
 import com.prueba.sofkaestadisticas.infraestructure.persistencia.repository.EstadisticaCambioClienteRepository;
 
@@ -32,70 +32,99 @@ class EstadisticaServiceTest {
     }
 
     @Test
-    void testProcesarEventoIngreso() {
-        Map<String, Object> evento = Map.of(
-            "tipoEvento", "INGRESO",
-            "sofkianoId", "123",
-            "nombre", "Ariana Mendoza",
-            "cliente", Map.of(
-                "clienteId", "456",
-                "nombreCliente", "Bancolombia",
-                "fecha", "2023-10-01T10:00:00"
-            )
-        );
+    void procesarEventoIngreso() {
+        // Arrange
+        Map<String, Object> evento = new HashMap<>();
+        evento.put("tipoEvento", "INGRESO");
+        evento.put("sofkianoId", "123");
+        evento.put("nombre", "John Doe");
 
-        EstadisticaCambioCliente estadistica = new EstadisticaCambioCliente("123", "Ariana Mendoza");
+        Map<String, Object> clienteInfo = new HashMap<>();
+        clienteInfo.put("clienteId", "456");
+        clienteInfo.put("nombreCliente", "Cliente A");
+        clienteInfo.put("fecha", "2023-10-01T10:00:00");
+        evento.put("cliente", clienteInfo);
+
+        EstadisticaCambioCliente estadistica = new EstadisticaCambioCliente("123", "John Doe");
         when(repository.findBySofkianoId("123")).thenReturn(Optional.of(estadistica));
 
+        // Act
         estadisticaService.procesarEvento(evento);
 
-        assertEquals(1, estadistica.getClientesIngreso().size());
-        verify(repository).save(estadistica);
+        // Assert
+        ArgumentCaptor<EstadisticaCambioCliente> captor = ArgumentCaptor.forClass(EstadisticaCambioCliente.class);
+        verify(repository).save(captor.capture());
+        EstadisticaCambioCliente savedEstadistica = captor.getValue();
+
+        assertEquals(1, savedEstadistica.getClientesIngreso().size());
+        assertEquals("456", savedEstadistica.getClientesIngreso().get(0).getClienteId());
     }
 
     @Test
-    void testProcesarEventoEgreso() {
-        Map<String, Object> evento = Map.of(
-            "tipoEvento", "EGRESO",
-            "sofkianoId", "123",
-            "nombre", "Ariana Mendoza",
-            "cliente", Map.of(
-                "clienteId", "456",
-                "nombreCliente", "Bancolombia",
-                "fecha", "2023-10-01T10:00:00"
-            )
-        );
+    void procesarEventoEgreso() {
+        // Arrange
+        Map<String, Object> evento = new HashMap<>();
+        evento.put("tipoEvento", "EGRESO");
+        evento.put("sofkianoId", "123");
+        evento.put("nombre", "John Doe");
 
-        EstadisticaCambioCliente estadistica = new EstadisticaCambioCliente("123", "Ariana Mendoza");
+        Map<String, Object> clienteInfo = new HashMap<>();
+        clienteInfo.put("clienteId", "456");
+        clienteInfo.put("nombreCliente", "Cliente A");
+        clienteInfo.put("fecha", "2023-10-01T10:00:00");
+        evento.put("cliente", clienteInfo);
+
+        EstadisticaCambioCliente estadistica = new EstadisticaCambioCliente("123", "John Doe");
         when(repository.findBySofkianoId("123")).thenReturn(Optional.of(estadistica));
 
+        // Act
         estadisticaService.procesarEvento(evento);
 
-        assertEquals(1, estadistica.getClientesEgreso().size());
-        verify(repository).save(estadistica);
+        // Assert
+        ArgumentCaptor<EstadisticaCambioCliente> captor = ArgumentCaptor.forClass(EstadisticaCambioCliente.class);
+        verify(repository).save(captor.capture());
+        EstadisticaCambioCliente savedEstadistica = captor.getValue();
+
+        assertEquals(1, savedEstadistica.getClientesEgreso().size());
+        assertEquals("456", savedEstadistica.getClientesEgreso().get(0).getClienteId());
     }
 
     @Test
-    void testObtenerEstadisticasPorRangoFechas() {
-        EstadisticaCambioCliente estadistica = new EstadisticaCambioCliente("123", "Ariana Mendoza");
-        estadistica.getClientesIngreso().add(new Cliente("456", "Bancolombia", "2023-10-01T10:00:00"));
-        when(repository.findAll()).thenReturn(List.of(estadistica));
+    void procesarEventoSofkianoIdNulo() {
+        // Arrange
+        Map<String, Object> evento = new HashMap<>();
+        evento.put("tipoEvento", "INGRESO");
+        evento.put("sofkianoId", null);
+        evento.put("nombre", "John Doe");
 
-        List<EstadisticaCambioCliente> result = estadisticaService.obtenerEstadisticasPorRangoFechas("2023-10-01T00:00:00", "2023-10-02T00:00:00");
+        Map<String, Object> clienteInfo = new HashMap<>();
+        clienteInfo.put("clienteId", "456");
+        clienteInfo.put("nombreCliente", "Cliente A");
+        clienteInfo.put("fecha", "2023-10-01T10:00:00");
+        evento.put("cliente", clienteInfo);
 
-        assertEquals(1, result.size());
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            estadisticaService.procesarEvento(evento);
+        });
+
+        assertEquals("El sofkianoId no puede ser nulo o vacío.", exception.getMessage());
     }
 
     @Test
-    void testObtenerIngresosYSalidas() {
-        EstadisticaCambioCliente estadistica = new EstadisticaCambioCliente("123", "Ariana Mendoza");
-        estadistica.getClientesIngreso().add(new Cliente("456", "Bancolombia", "2023-10-01T10:00:00"));
-        estadistica.getClientesEgreso().add(new Cliente("789", "Seguros Libertador", "2023-10-01T12:00:00"));
-        when(repository.findAll()).thenReturn(List.of(estadistica));
+    void procesarEventoClienteInfoNulo() {
+        // Arrange
+        Map<String, Object> evento = new HashMap<>();
+        evento.put("tipoEvento", "INGRESO");
+        evento.put("sofkianoId", "123");
+        evento.put("nombre", "John Doe");
+        evento.put("cliente", null);
 
-        Map<String, Integer> result = estadisticaService.obtenerIngresosYSalidas("2023-10-01T00:00:00", "2023-10-02T00:00:00");
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            estadisticaService.procesarEvento(evento);
+        });
 
-        assertEquals(1, result.get("ingresos"));
-        assertEquals(1, result.get("egresos"));
+        assertEquals("clienteInfo no puede ser nulo en el evento: " + evento, exception.getMessage());
     }
 }

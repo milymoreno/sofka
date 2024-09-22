@@ -4,6 +4,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import java.util.Map;
 import java.util.List;
+
+import com.prueba.sofkaestadisticas.aplicattion.response.EstadisticaCambioClienteResponse;
 import com.prueba.sofkaestadisticas.aplicattion.service.IEstadisticaService;
 import com.prueba.sofkaestadisticas.domain.model.entity.EstadisticaCambioCliente;
 
@@ -18,18 +20,23 @@ public class EstadisticaController {
     }
 
     @GetMapping("/cambioClientes")
-    public ResponseEntity<List<EstadisticaCambioCliente>> obtenerEstadisticasPorRangoFechas(
+    public ResponseEntity<List<EstadisticaCambioClienteResponse>> obtenerEstadisticasPorRangoFechas(
             @RequestParam String fechaInicio, 
             @RequestParam String fechaFin) {
-        List<EstadisticaCambioCliente> estadisticas = estadisticaService.obtenerEstadisticasPorRangoFechas(fechaInicio, fechaFin);
+        List<EstadisticaCambioClienteResponse> estadisticas = estadisticaService.obtenerEstadisticasPorRangoFechas(fechaInicio, fechaFin);
         return ResponseEntity.ok(estadisticas);
     }
-
+    
     @GetMapping("/ingresosVsSalidas")
     public ResponseEntity<Map<String, Integer>> obtenerIngresosYSalidas(
             @RequestParam String fechaInicio, 
             @RequestParam String fechaFin) {
         Map<String, Integer> resultado = estadisticaService.obtenerIngresosYSalidas(fechaInicio, fechaFin);
         return ResponseEntity.ok(resultado);
+    }
+
+    @GetMapping
+    public List<EstadisticaCambioCliente> getAllEstadisticas() {
+        return estadisticaService.getAllEstadisticas(); 
     }
 }
