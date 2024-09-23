@@ -55,15 +55,15 @@ public class ExcelServiceTest {
         headerRow.createCell(11).setCellValue("FechaModificacion");
 
         var dataRow = sheet.createRow(1);
-        dataRow.createCell(0).setCellValue("CC");
-        dataRow.createCell(1).setCellValue("123456789");
-        dataRow.createCell(2).setCellValue("John");
-        dataRow.createCell(3).setCellValue("Doe");
-        dataRow.createCell(4).setCellValue("123 Main St");
+        dataRow.createCell(0).setCellValue("CEDULA"); // Ensure this is a valid enum value
+        dataRow.createCell(1).setCellValue("1020846521");
+        dataRow.createCell(2).setCellValue("Mily Maria");
+        dataRow.createCell(3).setCellValue("Moreno Liscano");
+        dataRow.createCell(4).setCellValue("Bello Antioquia");
         dataRow.createCell(5).setCellValue(true);
-        dataRow.createCell(6).setCellValue("john.doe@example.com");
-        dataRow.createCell(7).setCellValue("Developer");
-        dataRow.createCell(8).setCellValue(5);
+        dataRow.createCell(6).setCellValue("mily.moreno@example.com");
+        dataRow.createCell(7).setCellValue("Arquitecto de Soluciones y Lider Tecnico");
+        dataRow.createCell(8).setCellValue(15);
         dataRow.createCell(9).setCellValue(LocalDateTime.now().toString());
         dataRow.createCell(10).setCellValue(LocalDateTime.now().toString());
         dataRow.createCell(11).setCellValue(LocalDateTime.now().toString());

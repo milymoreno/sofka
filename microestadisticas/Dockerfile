@@ -1,4 +1,6 @@
-FROM openjdk:17
-ADD target/apidocker-0.0.1.jar target/apidocker-0.0.1.jar
-EXPOSE 8082
-ENTRYPOINT ["java", "-jar", "target/apidocker-0.0.1.jar"]
+# Dockerfile para Estadísticas
+FROM openjdk:17-slim
+VOLUME /tmp
+COPY target/estadisticas-0.0.1.jar estadisticas-0.0.1.jar
+EXPOSE 7081  
+ENTRYPOINT ["java", "-jar", "/estadisticas-0.0.1.jar"]

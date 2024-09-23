@@ -11,9 +11,9 @@
 	</parent>
 
 	<groupId>com.prueba</groupId>
-	<artifactId>sofka</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>sofka</name>
+	<artifactId>sofkianos</artifactId>
+	<version>0.0.1</version>
+	<name>sofkianos</name>
 	<description>ApiRest para prueba sofkianos</description>
 
 	<properties>
@@ -122,7 +122,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>sofkianos</finalName>
+		<finalName>sofkianos-0.0.1</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

@@ -88,32 +88,33 @@ public class SofkianoService implements ISofkianoService {
     }
 
     @Override
-    @Transactional
-    public void desasociarCliente(Long sofkianoId, Long clienteId, String descripcion) {
+        @Transactional
+        public void desasociarCliente(Long sofkianoId, Long clienteId, String descripcion) {
+           
+            Sofkiano sofkiano = sofkianoRepository.findById(sofkianoId)
+                .orElseThrow(() -> new IllegalArgumentException("Sofkiano no encontrado"));
+            
+            Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
+    
+            ExperienciaCliente experienciaCliente = experienciaClienteRepository
+                .findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId)
+                .orElseThrow(() -> new IllegalArgumentException("No existe asociación activa entre el Sofkiano y el Cliente"));
+    
+            experienciaCliente.setFechaFin(LocalDateTime.now());
+            experienciaCliente.setDescripcion(descripcion);
+    
+            experienciaClienteRepository.save(experienciaCliente);
+    
+            // Publicar evento de egreso en RabbitMQ
+            sofkianoEventProducer.sendSofkianoChangeEvent(
+                sofkianoId.toString(),
+                sofkiano.getNombres(),
+                clienteId.toString(),
+                cliente.getNombre(),
+                LocalDateTime.now().toString(),
+                "EGRESO"
+            );
+        }   
        
-        Sofkiano sofkiano = sofkianoRepository.findById(sofkianoId)
-            .orElseThrow(() -> new IllegalArgumentException("Sofkiano no encontrado"));
-        
-        Cliente cliente = clienteRepository.findById(clienteId)
-            .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
-
-        ExperienciaCliente experienciaCliente = experienciaClienteRepository
-            .findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId)
-            .orElseThrow(() -> new IllegalArgumentException("No existe asociación activa entre el Sofkiano y el Cliente"));
-
-        experienciaCliente.setFechaFin(LocalDateTime.now());
-        experienciaCliente.setDescripcion(descripcion);
-
-        experienciaClienteRepository.save(experienciaCliente);
-
-        // Publicar evento de egreso en RabbitMQ
-        sofkianoEventProducer.sendSofkianoChangeEvent(
-            sofkianoId.toString(),
-            sofkiano.getNombres(),
-            clienteId.toString(),
-            cliente.getNombre(),
-            LocalDateTime.now().toString(),
-            "EGRESO"
-        );
-    }
 }
