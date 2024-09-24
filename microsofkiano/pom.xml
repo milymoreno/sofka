@@ -119,6 +119,27 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- Apache Camel Core -->  
+		<dependency>
+			<groupId>org.apache.camel.springboot</groupId>
+			<artifactId>camel-spring-boot-starter</artifactId>
+			<version>3.18.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-core</artifactId>
+			<version>3.18.0</version> 
+		</dependency>
+
+		<!-- Apache Camel RabbitMQ -->
+		<dependency>
+			<groupId>org.apache.camel.springboot</groupId>
+			<artifactId>camel-rabbitmq-starter</artifactId>
+			<version>3.18.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

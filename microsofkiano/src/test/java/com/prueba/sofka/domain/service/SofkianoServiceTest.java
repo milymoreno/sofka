@@ -14,7 +14,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.prueba.sofka.application.components.SofkianoEventProducer;
+//import com.prueba.sofka.application.components.SofkianoEventProducer;
+import org.apache.camel.ProducerTemplate;
+import com.prueba.sofka.domain.service.SofkianoEventProducerRoute;
+
 import com.prueba.sofka.domain.model.entity.Cliente;
 import com.prueba.sofka.domain.model.entity.ExperienciaCliente;
 import com.prueba.sofka.domain.model.entity.Sofkiano;
@@ -31,7 +34,7 @@ class SofkianoServiceTest {
     private ClienteRepository clienteRepository;
 
     @Mock
-    private SofkianoEventProducer sofkianoEventProducer;
+    private SofkianoEventProducerRoute sofkianoEventProducer;
 
     @Mock
     private ExperienciaClienteRepository experienciaClienteRepository;
@@ -130,12 +133,13 @@ class SofkianoServiceTest {
         verify(sofkianoRepository, times(1)).findById(sofkianoId);
         verify(clienteRepository, times(1)).findById(clienteId);
         verify(experienciaClienteRepository, times(1)).save(any(ExperienciaCliente.class));
-        verify(sofkianoEventProducer, times(1)).sendSofkianoChangeEvent(
+        //verify(sofkianoEventProducer, times(1)).sendSofkianoChangeEvent(
+        verify(sofkianoService, times(1)).publicarEvento(
             eq(sofkianoId.toString()), 
                 eq(sofkiano.getNombres()), 
                 eq(clienteId.toString()), 
                 eq(cliente.getNombre()), 
-                anyString(), 
+                //anyString(), 
                 eq("INGRESO")
         );
     }
@@ -169,12 +173,13 @@ class SofkianoServiceTest {
             verify(clienteRepository, times(1)).findById(clienteId);
             verify(experienciaClienteRepository, times(1)).findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId);
             verify(experienciaClienteRepository, times(1)).save(experienciaCliente);
-            verify(sofkianoEventProducer, times(1)).sendSofkianoChangeEvent(
+            //verify(sofkianoEventProducer, times(1)).sendSofkianoChangeEvent(
+                verify(sofkianoService, times(1)).publicarEvento(
                 eq(sofkianoId.toString()), 
                 eq(sofkiano.getNombres()), 
                 eq(clienteId.toString()), 
                 eq(cliente.getNombre()), 
-                anyString(), 
+                //anyString(), 
                 eq("EGRESO")
             );
         }
