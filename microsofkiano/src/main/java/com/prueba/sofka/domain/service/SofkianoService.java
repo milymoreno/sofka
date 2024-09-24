@@ -104,43 +104,6 @@ public class SofkianoService implements ISofkianoService {
     }
 
 
-    // @Override
-    // @Transactional
-    // public ExperienciaCliente asociarCliente(Long sofkianoId, Long clienteId, String rol) {
-    //     Sofkiano sofkiano = sofkianoRepository.findById(sofkianoId)
-    //         .orElseThrow(() -> new IllegalArgumentException("Sofkiano no encontrado"));
-        
-    //     Cliente cliente = clienteRepository.findById(clienteId)
-    //         .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
-
-    //     ExperienciaCliente experienciaCliente = new ExperienciaCliente();
-    //     experienciaCliente.setSofkiano(sofkiano);
-    //     experienciaCliente.setCliente(cliente);
-    //     experienciaCliente.setRol(rol);
-
-    //     ExperienciaCliente savedExperiencia = experienciaClienteRepository.save(experienciaCliente);
-
-    //     // Publicar evento de ingreso en RabbitMQ
-    //     // sofkianoEventProducer.sendSofkianoChangeEvent(
-    //     //     sofkianoId.toString(),
-    //     //     sofkiano.getNombres(),
-    //     //     clienteId.toString(),
-    //     //     cliente.getNombre(),
-    //     //     LocalDateTime.now().toString(),
-    //     //     "INGRESO"
-    //     // );
-
-    //     publicarEvento(
-    //         sofkianoId.toString(),
-    //         sofkiano.getNombres(),
-    //         clienteId.toString(),
-    //         cliente.getNombre(),
-    //         "INGRESO"
-    //     );
-
-
-    //     return savedExperiencia;
-    // }
 
     @Override
     @Transactional

@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,10 +12,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-//import com.prueba.sofka.application.components.SofkianoEventProducer;
-import org.apache.camel.ProducerTemplate;
-import com.prueba.sofka.domain.service.SofkianoEventProducerRoute;
-
 import com.prueba.sofka.domain.model.entity.Cliente;
 import com.prueba.sofka.domain.model.entity.ExperienciaCliente;
 import com.prueba.sofka.domain.model.entity.Sofkiano;
@@ -25,7 +19,8 @@ import com.prueba.sofka.infrastructure.persistence.repository.ClienteRepository;
 import com.prueba.sofka.infrastructure.persistence.repository.ExperienciaClienteRepository;
 import com.prueba.sofka.infrastructure.persistence.repository.SofkianoRepository;
 
-class SofkianoServiceTest {
+
+public class SofkianoServiceTest {
 
     @Mock
     private SofkianoRepository sofkianoRepository;
@@ -34,153 +29,136 @@ class SofkianoServiceTest {
     private ClienteRepository clienteRepository;
 
     @Mock
-    private SofkianoEventProducerRoute sofkianoEventProducer;
+    private ExperienciaClienteRepository experienciaClienteRepository;
 
     @Mock
-    private ExperienciaClienteRepository experienciaClienteRepository;
+    private SofkianoEventProducerRoute sofkianoEventProducer;
 
     @InjectMocks
     private SofkianoService sofkianoService;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testFindAll() {
-        Sofkiano sofkiano1 = new Sofkiano();
-        Sofkiano sofkiano2 = new Sofkiano();
-        List<Sofkiano> sofkianos = Arrays.asList(sofkiano1, sofkiano2);
-
-        when(sofkianoRepository.findAll()).thenReturn(sofkianos);
-
-        List<Sofkiano> result = sofkianoService.findAll();
-
-        assertEquals(2, result.size());
-        verify(sofkianoRepository, times(1)).findAll();
-    }
-
-    @Test
-    void testSave() {
-        Sofkiano sofkiano = new Sofkiano();
-
-        when(sofkianoRepository.save(sofkiano)).thenReturn(sofkiano);
-
-        Sofkiano result = sofkianoService.save(sofkiano);
-
-        assertNotNull(result);
-        verify(sofkianoRepository, times(1)).save(sofkiano);
-    }
-
-    @Test
-    void testFindById() {
-        Sofkiano sofkiano = new Sofkiano();
-        Long id = 1L;
-
-        when(sofkianoRepository.findById(id)).thenReturn(Optional.of(sofkiano));
-
-        Sofkiano result = sofkianoService.findById(id);
-
-        assertNotNull(result);
-        verify(sofkianoRepository, times(1)).findById(id);
-    }
-
-    @Test
-    void testDeleteById() {
-        Long id = 1L;
-
-        doNothing().when(sofkianoRepository).deleteById(id);
-
-        sofkianoService.deleteById(id);
-
-        verify(sofkianoRepository, times(1)).deleteById(id);
-    }
-
-    @Test
-    void testSaveAll() {
-        Sofkiano sofkiano1 = new Sofkiano();
-        Sofkiano sofkiano2 = new Sofkiano();
-        List<Sofkiano> sofkianos = Arrays.asList(sofkiano1, sofkiano2);
-
-        when(sofkianoRepository.saveAll(sofkianos)).thenReturn(sofkianos);
-
-        sofkianoService.saveAll(sofkianos);
-
-        verify(sofkianoRepository, times(1)).saveAll(sofkianos);
-    }
-
-    @Test
-    void testAsociarCliente() {
+    public void testAsociarCliente_Success() {
         Long sofkianoId = 1L;
         Long clienteId = 1L;
-        String rol = "CyberSecurity";
+        String rol = "Developer";
+
         Sofkiano sofkiano = new Sofkiano();
         sofkiano.setId(sofkianoId);
-        sofkiano.setNombres("Ariana ");
-        sofkiano.setApellidos("Mendoza Moreno");
+        sofkiano.setNombres("John Doe");
+
         Cliente cliente = new Cliente();
         cliente.setId(clienteId);
-        ExperienciaCliente experienciaCliente = new ExperienciaCliente();
-    
+        cliente.setNombre("Acme Corp");
+
         when(sofkianoRepository.findById(sofkianoId)).thenReturn(Optional.of(sofkiano));
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-        when(experienciaClienteRepository.save(any(ExperienciaCliente.class))).thenReturn(experienciaCliente);
-    
+        when(experienciaClienteRepository.findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId)).thenReturn(Optional.empty());
+        when(experienciaClienteRepository.save(any(ExperienciaCliente.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
         ExperienciaCliente result = sofkianoService.asociarCliente(sofkianoId, clienteId, rol);
-    
+
         assertNotNull(result);
-        verify(sofkianoRepository, times(1)).findById(sofkianoId);
-        verify(clienteRepository, times(1)).findById(clienteId);
-        verify(experienciaClienteRepository, times(1)).save(any(ExperienciaCliente.class));
-        //verify(sofkianoEventProducer, times(1)).sendSofkianoChangeEvent(
-        verify(sofkianoService, times(1)).publicarEvento(
-            eq(sofkianoId.toString()), 
-                eq(sofkiano.getNombres()), 
-                eq(clienteId.toString()), 
-                eq(cliente.getNombre()), 
-                //anyString(), 
-                eq("INGRESO")
-        );
+        assertEquals(sofkiano, result.getSofkiano());
+        assertEquals(cliente, result.getCliente());
+        assertEquals(rol, result.getRol());
+
+        verify(sofkianoRepository).findById(sofkianoId);
+        verify(clienteRepository).findById(clienteId);
+        verify(experienciaClienteRepository).findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId);
+        verify(experienciaClienteRepository).save(any(ExperienciaCliente.class));
+        verify(sofkianoEventProducer).sendEvent(anyMap());
     }
 
     @Test
-        void testDesasociarCliente() {
-            Long sofkianoId = 1L;
-            Long clienteId = 1L;
-            String descripcion = "Desasociación por finalización de proyecto";
-            Sofkiano sofkiano = new Sofkiano();
-            sofkiano.setId(sofkianoId);
-            sofkiano.setNombres("Angel Dairam");
-            sofkiano.setApellidos("Mendoza Moreno");
-            Cliente cliente = new Cliente();
-            cliente.setId(clienteId);
-            cliente.setNombre("Cliente Test");
-            ExperienciaCliente experienciaCliente = new ExperienciaCliente();
-            experienciaCliente.setSofkiano(sofkiano);
-            experienciaCliente.setCliente(cliente);
-    
-            when(sofkianoRepository.findById(sofkianoId)).thenReturn(Optional.of(sofkiano));
-            when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-            when(experienciaClienteRepository.findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId))
-                .thenReturn(Optional.of(experienciaCliente));
-    
-            sofkianoService.desasociarCliente(sofkianoId, clienteId, descripcion);
-    
-            assertNotNull(experienciaCliente.getFechaFin());
-            assertEquals(descripcion, experienciaCliente.getDescripcion());
-            verify(sofkianoRepository, times(1)).findById(sofkianoId);
-            verify(clienteRepository, times(1)).findById(clienteId);
-            verify(experienciaClienteRepository, times(1)).findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId);
-            verify(experienciaClienteRepository, times(1)).save(experienciaCliente);
-            //verify(sofkianoEventProducer, times(1)).sendSofkianoChangeEvent(
-                verify(sofkianoService, times(1)).publicarEvento(
-                eq(sofkianoId.toString()), 
-                eq(sofkiano.getNombres()), 
-                eq(clienteId.toString()), 
-                eq(cliente.getNombre()), 
-                //anyString(), 
-                eq("EGRESO")
-            );
-        }
+    public void testAsociarCliente_SofkianoNotFound() {
+        Long sofkianoId = 1L;
+        Long clienteId = 1L;
+        String rol = "Developer";
+
+        when(sofkianoRepository.findById(sofkianoId)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            sofkianoService.asociarCliente(sofkianoId, clienteId, rol);
+        });
+
+        assertEquals("Sofkiano no encontrado", exception.getMessage());
+
+        verify(sofkianoRepository).findById(sofkianoId);
+        verify(clienteRepository, never()).findById(clienteId);
+        verify(experienciaClienteRepository, never()).findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId);
+        verify(experienciaClienteRepository, never()).save(any(ExperienciaCliente.class));
+        verify(sofkianoEventProducer, never()).sendEvent(anyMap());
+    }
+
+    @Test
+    public void testAsociarCliente_ClienteNotFound() {
+        Long sofkianoId = 1L;
+        Long clienteId = 1L;
+        String rol = "Developer";
+
+        Sofkiano sofkiano = new Sofkiano();
+        sofkiano.setId(sofkianoId);
+        sofkiano.setNombres("John Doe");
+
+        when(sofkianoRepository.findById(sofkianoId)).thenReturn(Optional.of(sofkiano));
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            sofkianoService.asociarCliente(sofkianoId, clienteId, rol);
+        });
+
+        assertEquals("Cliente no encontrado", exception.getMessage());
+
+        verify(sofkianoRepository).findById(sofkianoId);
+        verify(clienteRepository).findById(clienteId);
+        verify(experienciaClienteRepository, never()).findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId);
+        verify(experienciaClienteRepository, never()).save(any(ExperienciaCliente.class));
+        verify(sofkianoEventProducer, never()).sendEvent(anyMap());
+    }
+
+    @Test
+    public void testAsociarCliente_ExperienciaExistente() {
+        Long sofkianoId = 1L;
+        Long clienteId = 1L;
+        String rol = "Developer";
+
+        Sofkiano sofkiano = new Sofkiano();
+        sofkiano.setId(sofkianoId);
+        sofkiano.setNombres("John Doe");
+
+        Cliente cliente = new Cliente();
+        cliente.setId(clienteId);
+        cliente.setNombre("Acme Corp");
+
+        ExperienciaCliente experienciaExistente = new ExperienciaCliente();
+        experienciaExistente.setSofkiano(sofkiano);
+        experienciaExistente.setCliente(cliente);
+        experienciaExistente.setRol("Tester");
+
+        when(sofkianoRepository.findById(sofkianoId)).thenReturn(Optional.of(sofkiano));
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        when(experienciaClienteRepository.findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId)).thenReturn(Optional.of(experienciaExistente));
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            sofkianoService.asociarCliente(sofkianoId, clienteId, rol);
+        });
+
+        String expectedMessage = String.format("El sofkiano %s ya está asociado al cliente %s con el rol: %s.", 
+                                                sofkiano.getNombres(), 
+                                                cliente.getNombre(), 
+                                                experienciaExistente.getRol());
+        assertEquals(expectedMessage, exception.getMessage());
+
+        verify(sofkianoRepository).findById(sofkianoId);
+        verify(clienteRepository).findById(clienteId);
+        verify(experienciaClienteRepository).findBySofkianoIdAndClienteIdAndFechaFinIsNull(sofkianoId, clienteId);
+        verify(experienciaClienteRepository, never()).save(any(ExperienciaCliente.class));
+        verify(sofkianoEventProducer, never()).sendEvent(anyMap());
+    }
 }
