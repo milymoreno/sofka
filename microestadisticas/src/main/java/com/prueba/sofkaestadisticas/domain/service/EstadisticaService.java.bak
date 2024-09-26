@@ -31,62 +31,48 @@ public class EstadisticaService implements IEstadisticaService {
     }
 
     @Override
-	public void procesarEvento(Map<String, Object> evento) {
-		String tipoEvento = (String) evento.get("tipoEvento");
-		String sofkianoId = (String) evento.get("sofkianoId");
-		String nombreSofkiano = (String) evento.get("nombre");
-		
-		System.out.println("Procesando Evento: " + tipoEvento);
+    public void procesarEvento(Map<String, Object> evento) {
+        String tipoEvento = (String) evento.get("tipoEvento");
+        String sofkianoId = (String) evento.get("sofkianoId");
+        String nombreSofkiano = (String) evento.get("nombre");
 
-		
-		if (sofkianoId == null || sofkianoId.trim().isEmpty()) {
-			throw new IllegalArgumentException("El sofkianoId no puede ser nulo o vacío.");
-		}
+        // Validar que el sofkianoId no esté vacío o nulo
+        if (sofkianoId == null || sofkianoId.trim().isEmpty()) {
+            throw new IllegalArgumentException("El sofkianoId no puede ser nulo o vacío.");
+        }
 
-		Map<String, Object> clienteInfo = (Map<String, Object>) evento.get("cliente");
+        Map<String, Object> clienteInfo = (Map<String, Object>) evento.get("cliente");
 
-		if (clienteInfo == null) {
-			throw new IllegalArgumentException("clienteInfo no puede ser nulo en el evento: " + evento);
-		}
+        
+        if (clienteInfo == null) {
+            throw new IllegalArgumentException("clienteInfo no puede ser nulo en el evento: " + evento);
+        }
 
-		String clienteId = (String) clienteInfo.get("clienteId");
-		String nombreCliente = (String) clienteInfo.get("nombreCliente");
-		String fecha = (String) clienteInfo.get("fecha");
-		
-		System.out.println("Trayendo datos de CLIENTE: " + nombreCliente);
-
-		Cliente cliente = new Cliente(clienteId, nombreCliente, fecha);
-
-		EstadisticaCambioCliente estadistica = repository.findBySofkianoId(sofkianoId)
-			.orElseGet(() -> {
-				EstadisticaCambioCliente nuevaEstadistica = new EstadisticaCambioCliente(sofkianoId, nombreSofkiano);
-				return nuevaEstadistica;
-			});
-
-		if (tipoEvento.equalsIgnoreCase("INGRESO")) {
-			// Verificar que el cliente no esté ya en la lista de ingresos
-			if (estadistica.getClientesIngreso().stream().noneMatch(c -> c.getClienteId().equals(clienteId))) {
-				estadistica.getClientesIngreso().add(cliente);
-			}
-		} else if (tipoEvento.equalsIgnoreCase("EGRESO")) {
-			// Verificar que el cliente no esté ya en la lista de egresos
-			if (estadistica.getClientesEgreso().stream().noneMatch(c -> c.getClienteId().equals(clienteId))) {
-				estadistica.getClientesEgreso().add(cliente);
-			}
-		}
-		
-		System.out.println("Va a guardar en estadísticas: " + estadistica);    
-		
-		try {
-			repository.save(estadistica);
-			System.out.println("Estadística guardada exitosamente.");
-		} catch (Exception e) {
-			System.err.println("Error al guardar la estadística: " + e.getMessage());
-			e.printStackTrace();
-			throw new RuntimeException("No se pudo guardar la estadística en la base de datos.", e);
-		}
+        String clienteId = (String) clienteInfo.get("clienteId");
+        String nombreCliente = (String) clienteInfo.get("nombreCliente");
+        String fecha = (String) clienteInfo.get("fecha");
+        
+        Cliente cliente = new Cliente(clienteId, nombreCliente, fecha);
+        
+        EstadisticaCambioCliente estadistica = repository.findBySofkianoId(sofkianoId)
+            .orElseGet(() -> {
+                EstadisticaCambioCliente nuevaEstadistica = new EstadisticaCambioCliente(sofkianoId, nombreSofkiano);
+                return nuevaEstadistica;
+            });
+       
+        if (tipoEvento.equalsIgnoreCase("INGRESO")) {
+            // Verificar que el cliente no esté ya en la lista de ingresos
+            if (estadistica.getClientesIngreso().stream().noneMatch(c -> c.getClienteId().equals(clienteId))) {
+                estadistica.getClientesIngreso().add(cliente);
+            }
+        } else if (tipoEvento.equalsIgnoreCase("EGRESO")) {
+            // Verificar que el cliente no esté ya en la lista de egresos
+            if (estadistica.getClientesEgreso().stream().noneMatch(c -> c.getClienteId().equals(clienteId))) {
+                estadistica.getClientesEgreso().add(cliente);
+            }
+        }
+        repository.save(estadistica);
 	}
-
 
 
    
@@ -134,9 +120,9 @@ public class EstadisticaService implements IEstadisticaService {
 																	clientesEgreso, clientesIngreso);
 					}
 
-					return null; 
+					return null; // Ignorar si no hay cambio válido
 				})
-				.filter(response -> response != null)
+				.filter(response -> response != null) // Filtrar nulos
 				.collect(Collectors.toList());
 
 		} catch (DateTimeParseException e) {
@@ -144,7 +130,72 @@ public class EstadisticaService implements IEstadisticaService {
 		}
 	}
 
+    /* @Override
+    public List<EstadisticaCambioClienteResponse> obtenerEstadisticasPorRangoFechas(String fechaInicio, String fechaFin) {
+        try {
+            LocalDateTime inicio = LocalDateTime.parse(fechaInicio, formatter);
+            LocalDateTime fin = LocalDateTime.parse(fechaFin, formatter);
+    
+            // Verificar que la fecha de inicio no sea posterior a la fecha de fin
+            if (inicio.isAfter(fin)) {
+                throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha de fin.");
+            }
+            List<EstadisticaCambioCliente> estadisticas = (List<EstadisticaCambioCliente>) repository.findAll();
+    
+            return estadisticas.stream()
+                .filter(estadistica -> 
+                    hayClientesEnRango(estadistica.getClientesIngreso(), inicio, fin) && 
+                    hayClientesEnRango(estadistica.getClientesEgreso(), inicio, fin) &&
+                    tieneCambioValido(estadistica))
+                .map(estadistica -> {
+                    String sofkianoId = estadistica.getSofkianoId();
+                    String nombreSofkiano = estadistica.getNombre();
+                    
+                    // Crear listas de ClienteInfo para ingreso y egreso
+                    List<ClienteInfo> clientesIngreso = estadistica.getClientesIngreso().stream()
+                        .filter(cliente -> estaEnRango(cliente.getFecha(), inicio, fin)) // Filtrar ingresos en rango
+                        .map(cliente -> new ClienteInfo(cliente.getClienteId(), cliente.getNombreCliente(), 
+                                                          LocalDateTime.parse(cliente.getFecha(), formatter)))
+                        .collect(Collectors.toList());
+    
+                    List<ClienteInfo> clientesEgreso = estadistica.getClientesEgreso().stream()
+                        .filter(cliente -> estaEnRango(cliente.getFecha(), inicio, fin)) // Filtrar egresos en rango
+                        .map(cliente -> new ClienteInfo(cliente.getClienteId(), cliente.getNombreCliente(), 
+                                                        LocalDateTime.parse(cliente.getFecha(), formatter)))
+                        .collect(Collectors.toList());
 
+                    // Validar que haya cambios de cliente distintos
+                    if (!clientesIngreso.isEmpty() && !clientesEgreso.isEmpty()) {
+                        boolean cambioValido = clientesIngreso.stream().anyMatch(ingreso -> 
+                            clientesEgreso.stream().anyMatch(egreso -> 
+                                !ingreso.getClienteId().equals(egreso.getClienteId())
+                            )
+                        );
+
+                        if (cambioValido) {
+                            return new EstadisticaCambioClienteResponse(sofkianoId, nombreSofkiano, 
+                                                                        clientesEgreso, clientesIngreso);
+                        }
+                    }
+
+                    return null; // Ignorar si no hay cambio válido
+    
+                    // Retornar solo si hay al menos un cliente de ingreso y de egreso
+                    // if (!clientesIngreso.isEmpty() && !clientesEgreso.isEmpty()) {
+                    //     return new EstadisticaCambioClienteResponse(sofkianoId, nombreSofkiano, 
+                    //                                                 clientesIngreso, clientesEgreso);
+                    // } else {
+                    //     return null; // Ignorar si no hay cambio válido
+                    // }
+                })
+                .filter(response -> response != null) // Filtrar nulos
+                .collect(Collectors.toList());
+    
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Formato de fecha inválido: " + e.getMessage());
+        }
+    }
+ */
 
 
     private boolean tieneCambioValido(EstadisticaCambioCliente estadistica) {

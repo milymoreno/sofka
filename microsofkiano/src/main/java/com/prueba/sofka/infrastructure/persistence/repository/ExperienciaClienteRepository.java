@@ -7,6 +7,8 @@ import com.prueba.sofka.domain.model.entity.ExperienciaCliente;
 public interface ExperienciaClienteRepository extends JpaRepository<ExperienciaCliente, Long> {
 
     Optional<ExperienciaCliente> findBySofkianoIdAndClienteIdAndFechaFinIsNull(Long sofkianoId, Long clienteId);
+    
+    Optional<ExperienciaCliente> findBySofkianoIdAndFechaFinIsNull(Long sofkianoId);
 }
 
 

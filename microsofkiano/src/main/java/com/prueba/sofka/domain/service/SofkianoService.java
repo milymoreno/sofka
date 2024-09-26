@@ -1,5 +1,7 @@
 package com.prueba.sofka.domain.service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 //import com.prueba.sofka.application.components.SofkianoEventProducer;
@@ -53,10 +55,6 @@ public class SofkianoService implements ISofkianoService {
         return sofkianoRepository.findById(id).orElse(null);
     }
 
-    @Override
-    public void deleteById(Long id) {
-        sofkianoRepository.deleteById(id);
-    }
 
     @Override
     public void saveAll(List<Sofkiano> sofkianos) {
@@ -103,8 +101,6 @@ public class SofkianoService implements ISofkianoService {
         return savedExperiencia;
     }
 
-
-
     @Override
     @Transactional
     public void desasociarCliente(Long sofkianoId, Long clienteId, String descripcion) {
@@ -142,6 +138,24 @@ public class SofkianoService implements ISofkianoService {
             "EGRESO"
         );
     } 
+    
+    @Override
+    public ResponseEntity<Void> deleteSofkiano(Long id) {
+        Optional<ExperienciaCliente> experienciaExistente = experienciaClienteRepository.findBySofkianoIdAndFechaFinIsNull(id);
+
+        if (experienciaExistente.isPresent()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        Sofkiano sofkiano = sofkianoRepository.findById(id).orElse(null);
+        if (sofkiano != null) {
+            sofkiano.setActivo(false);
+            sofkianoRepository.save(sofkiano);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
     
     public void publicarEvento(String sofkianoId, String nombreSofkiano, String clienteId, String nombreCliente, String tipoEvento) {
         Map<String, Object> evento = new HashMap<>();

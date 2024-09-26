@@ -47,8 +47,7 @@ public class SofkianoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSofkiano(@PathVariable Long id) {
-        sofkianoService.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return sofkianoService.deleteSofkiano(id);
     }
 
     @PostMapping("/{sofkianoId}/clientes/{clienteId}/asociar")
